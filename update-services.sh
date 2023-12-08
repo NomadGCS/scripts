@@ -1,4 +1,4 @@
 #!/bin/bash
-docker run --rm -it -w /home/ntc/services -v "$(pwd)":/home/ntc/services \
+docker run --rm -it -w /app -v "$NTC_SERVICES_PATH:/app" \
   -v "$SSH_AUTH_SOCK":/ssh-agent -e SSH_AUTH_SOCK=/ssh-agent bitnami/git \
-  git pull --tags
+  git fetch && git checkout "$1"

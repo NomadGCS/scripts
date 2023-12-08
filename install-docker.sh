@@ -1,5 +1,11 @@
 #!/bin/bash
 
+# Ensure that the current user is root
+if [[ $EUID -ne 0 ]]; then
+  echo "Must be run as root"
+  exit 1
+fi
+
 commandExists() {
   command -v "$@" >/dev/null 2>&1
 }
