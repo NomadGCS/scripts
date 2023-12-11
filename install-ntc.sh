@@ -29,3 +29,5 @@ docker run --rm -it -w /app -v "$NTC_SERVICES_PATH:/app" \
 chmod -R a+x "$NTC_SERVICES_PATH/scripts"
 # Create a command using the ntc script
 cp -fp "$NTC_SERVICES_PATH/scripts/ntc.sh" /usr/local/bin/ntc
+echo "Installation complete. Use the \`ntc\` command moving forward."
+ntc
