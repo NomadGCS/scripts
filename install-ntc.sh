@@ -11,10 +11,15 @@ read -r -p "Enter the services branch [default: $branch]: " inputValue
 if [[ -n "$inputValue" ]]; then
   branch="$inputValue"
 fi
-# Export the path for system use
+# Export the path for system use and make it persistent
 mkdir -p "$servicesPath"
 NTC_SERVICES_PATH="$servicesPath"
 export NTC_SERVICES_PATH
+if grep -q "^NTC_SERVICES_PATH=" /etc/environment; then
+    sed -i "s|^NTC_SERVICES_PATH=.*$|NTC_SERVICES_PATH=$NTC_SERVICES_PATH|" /etc/environment
+else
+    echo "NTC_SERVICES_PATH=$NTC_SERVICES_PATH" | tee -a /etc/environment
+fi
 # Install Docker by downloading and running the script from this repo
 curl -sSL https://raw.githubusercontent.com/NomadGCS/scripts/main/install-docker.sh | sh
 # Clone the services directory
