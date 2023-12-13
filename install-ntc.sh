@@ -6,10 +6,10 @@ if [[ -n "$inputValue" ]]; then
   servicesPath="$inputValue"
 fi
 
-branch="main"
-read -r -p "Enter the services branch [default: $branch]: " inputValue
+version="latest"
+read -r -p "Enter the NTC version [default: $version]: " inputValue
 if [[ -n "$inputValue" ]]; then
-  branch="$inputValue"
+  version="$inputValue"
 fi
 # Export the path for system use and make it persistent
 mkdir -p "$servicesPath"
@@ -26,10 +26,10 @@ curl -sSL https://raw.githubusercontent.com/NomadGCS/scripts/main/install-docker
 if [[ -n $SSH_AUTH_SOCK ]]; then
   docker run --rm -it -w /app -v "$NTC_SERVICES_PATH:/app" \
     -v "$SSH_AUTH_SOCK":/ssh-agent -e SSH_AUTH_SOCK=/ssh-agent bitnami/git \
-    git clone --branch "$branch" https://github.com/NomadGCS/services.git /app
+    git clone -b "$version" https://github.com/NomadGCS/services.git /app
 else
   docker run --rm -it -w /app -v "$NTC_SERVICES_PATH:/app" bitnami/git \
-    git clone --branch "$branch" https://github.com/NomadGCS/services.git /app
+    git clone -b "$version" https://github.com/NomadGCS/services.git /app
 fi
 # Create a command using the ntc script
 chmod -R a+x "$NTC_SERVICES_PATH/scripts"
