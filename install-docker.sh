@@ -85,6 +85,7 @@ gpgkey=https://download.docker.com/linux/centos/gpg
 }
 
 if [ -e "/etc/redhat-release" ]; then
+
   if commandExists docker; then
     echo "Docker already installed"
   else
@@ -100,6 +101,21 @@ if [ -e "/etc/redhat-release" ]; then
     echo
     installDockerRedHat
   fi
+  # ================================================================
+  # Add fapolicyd exception rules for our executables and libraries
+  # Copy exception rules for our app to a policy file we create for ourselves
+  FAPOLICY='
+  allow perm=open exe=/ : path=/usr/lib64/libpthread-2.28.so ftype=application/x-sharedlib trust=1
+  allow perm=open exe=/ : path=/usr/lib64/libseccomp.so.2.5.2 ftype=application/x-sharedlib trust=1
+  allow perm=open exe=/ : path=/usr/lib64/libc-2.28.so ftype=application/x-sharedlib trust=1
+  allow perm=open exe=/ : path=/usr/lib64/libresolv-2.28.so ftype=application/x-sharedlib trust=1
+  allow perm=open exe=/ : path=/usr/lib64/libresolv.so.2 ftype=application/x-sharedlib trust=1
+  allow perm=open exe=/ : path=/usr/lib64/libc.so.6 ftype=application/x-sharedlib trust=1
+  '
+  echo -e "$FAPOLICY" > /etc/fapolicyd/rules.d/29-nomad-ntc3.rules
+  fapolicyd-cli --update
+  systemctl restart fapolicyd
+  systemctl start docker
 else
   installDocker
 fi
