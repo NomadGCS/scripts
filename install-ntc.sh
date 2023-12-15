@@ -35,4 +35,4 @@ fi
 chmod -R a+x "$NTC_SERVICES_PATH/scripts"
 cp -fp "$NTC_SERVICES_PATH/scripts/ntc.sh" /usr/local/bin/ntc
 echo "Installation complete. Use the \`ntc\` command moving forward."
-ntc
+ntc 2>/dev/null
