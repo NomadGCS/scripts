@@ -1,25 +1,38 @@
 #!/bin/bash
-# Read the current input
-servicesPath="${NTC_SERVICES_PATH:-$(pwd)/services}"
-read -r -p "Enter the directory for NTC services [current: $servicesPath]: " inputValue
-if [[ -n "$inputValue" ]]; then
-  servicesPath="$inputValue"
-fi
+# shellcheck disable=SC2154
 
-version="latest"
-read -r -p "Enter the NTC version [default: $version]: " inputValue
-if [[ -n "$inputValue" ]]; then
-  version="$inputValue"
-fi
-# Export the path for system use and make it persistent
-mkdir -p "$servicesPath"
-NTC_SERVICES_PATH="$servicesPath"
-export NTC_SERVICES_PATH
-if grep -q "^NTC_SERVICES_PATH=" /etc/environment; then
-    sed -i "s|^NTC_SERVICES_PATH=.*$|NTC_SERVICES_PATH=$NTC_SERVICES_PATH|" /etc/environment
-else
-    echo "NTC_SERVICES_PATH=$NTC_SERVICES_PATH" | tee -a /etc/environment
-fi
+readInput() {
+
+  local name="$1"
+  local defaultValue="$2"
+  local currentValue="${!name:-$defaultValue}"
+  read -r -p "Enter the directory for $name [current: $currentValue]: " inputValue
+  if [[ -n "$inputValue" ]]; then
+    eval "$name=\"$inputValue\""
+  fi
+}
+
+updateOrReplaceEnvVar() {
+
+  local name="$1"
+  local value=${!name}
+  eval "export $name"
+  if grep -q "^$name=" /etc/environment; then
+      sed -i "s|^$name=.*$|$name=$value|" /etc/environment
+  else
+      echo "$name=$value" | tee -a /etc/environment
+  fi
+}
+
+# Read inputs for paths and version
+readInput "version" "latest"
+readInput "NTC_SERVICES_PATH" "$(pwd)/services"
+readInput "NTC_CONFIG_PATH" "$(pwd)/configurations"
+
+# Export the paths for system use and make them persistent
+mkdir -p "$NTC_CONFIG_PATH" "$NTC_SERVICES_PATH"
+updateOrReplaceEnvVar "NTC_CONFIG_PATH"
+updateOrReplaceEnvVar "NTC_SERVICES_PATH"
 # Install Docker by downloading and running the script from this repo
 curl -sSL https://raw.githubusercontent.com/NomadGCS/scripts/main/install-docker.sh | sh
 # Clone the services repository
@@ -34,5 +47,7 @@ fi
 # Create a command using the ntc script
 chmod -R a+x "$NTC_SERVICES_PATH/scripts"
 cp -fp "$NTC_SERVICES_PATH/scripts/ntc.sh" /usr/local/bin/ntc
+cp -np "$NTC_SERVICES_PATH/.env" "$NTC_CONFIG_PATH/.env"
+cp -np "$NTC_SERVICES_PATH/.env" "$NTC_CONFIG_PATH/.env"
 echo "Installation complete. Use the \`ntc\` command moving forward."
 ntc 2>/dev/null
