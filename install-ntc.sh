@@ -2,14 +2,10 @@
 # shellcheck disable=SC2154
 
 readInput() {
-
   local name="$1"
-  local defaultValue="$2"
-  local currentValue="${!name:-$defaultValue}"
-  read -r -p "Enter the directory for $name [current: $currentValue]: " inputValue
-  if [[ -n "$inputValue" ]]; then
-    eval "$name=\"$inputValue\""
-  fi
+  local currentValue="${!name:-$2}"
+  read -rp "Enter the $name [current: $currentValue]: " inputValue
+  eval "$name=\"${inputValue:-$currentValue}\""
 }
 
 updateOrReplaceEnvVar() {
@@ -49,5 +45,8 @@ chmod -R a+x "$NTC_SERVICES_PATH/scripts"
 cp -fp "$NTC_SERVICES_PATH/scripts/ntc.sh" /usr/local/bin/ntc
 cp -np "$NTC_SERVICES_PATH/.env" "$NTC_CONFIG_PATH/.env"
 cp -np "$NTC_SERVICES_PATH/.env" "$NTC_CONFIG_PATH/.env"
+
+echo
 echo "Installation complete. Use the \`ntc\` command moving forward."
 ntc 2>/dev/null
+echo
