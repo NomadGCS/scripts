@@ -24,6 +24,16 @@ updateOrReplaceEnvVar() {
 readInput "version" "latest"
 readInput "NTC_SERVICES_PATH" "$(pwd)/services"
 readInput "NTC_CONFIG_PATH" "$(pwd)/configurations"
+# If the services path currently exists, then delete it
+if [ -d "$NTC_SERVICES_PATH" ]; then
+  read -rp "$NTC_SERVICES_PATH exists. Do you want to delete it? [Y/n]: " choice
+  if [[ "$choice" =~ ^[Yy]$ ]]; then
+    echo "Deleting $NTC_SERVICES_PATH..."
+    rm -rf "$NTC_SERVICES_PATH"
+  else
+    echo "Preserving $NTC_SERVICES_PATH."
+  fi
+fi
 
 # Export the paths for system use and make them persistent
 mkdir -p "$NTC_CONFIG_PATH" "$NTC_SERVICES_PATH"
@@ -32,18 +42,19 @@ updateOrReplaceEnvVar "NTC_SERVICES_PATH"
 # Install Docker by downloading and running the script from this repo
 curl -sSL https://raw.githubusercontent.com/NomadGCS/scripts/main/install-docker.sh | sh
 # Clone the services repository
-if [[ -n $SSH_AUTH_SOCK ]]; then
-  docker run --rm -it -w /app -v "$NTC_SERVICES_PATH:/app" \
-    -v "$SSH_AUTH_SOCK":/ssh-agent -e SSH_AUTH_SOCK=/ssh-agent bitnami/git \
-    git clone -b "$version" https://github.com/NomadGCS/services.git /app
-else
-  docker run --rm -it -w /app -v "$NTC_SERVICES_PATH:/app" bitnami/git \
-    git clone -b "$version" https://github.com/NomadGCS/services.git /app
+if [ -z "$(ls -A "$NTC_SERVICES_PATH")" ]; then
+  if [[ -n $SSH_AUTH_SOCK ]]; then
+    docker run --rm -it -w /app -v "$NTC_SERVICES_PATH:/app" \
+      -v "$SSH_AUTH_SOCK":/ssh-agent -e SSH_AUTH_SOCK=/ssh-agent bitnami/git \
+      git clone -b "$version" https://github.com/NomadGCS/services.git /app
+  else
+    docker run --rm -it -w /app -v "$NTC_SERVICES_PATH:/app" bitnami/git \
+      git clone -b "$version" https://github.com/NomadGCS/services.git /app
+  fi
 fi
 # Create a command using the ntc script
 chmod -R a+x "$NTC_SERVICES_PATH/scripts"
 cp -fp "$NTC_SERVICES_PATH/scripts/ntc.sh" /usr/local/bin/ntc
-cp -np "$NTC_SERVICES_PATH/.env" "$NTC_CONFIG_PATH/.env"
 cp -np "$NTC_SERVICES_PATH/.env" "$NTC_CONFIG_PATH/.env"
 
 echo
